@@ -1,0 +1,73 @@
+.popupContainer {
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+  width: 375px;
+  max-height: 600px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap-xl);
+  padding: var(--gap-xl);
+  text-align: center;
+  color: var(--primary-white);
+  background-color: var(--black-900);
+}
+
+.statusHeading {
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+}
+
+.statusIcon {
+  display: flex;
+}
+
+.statusIcon {
+  font-size: calc(5 * var(--font-size-xl));
+}
+
+.ghost {
+  position: absolute;
+  top: -196px;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0.1;
+  font-size: calc(15 * var(--font-size-xl));
+  filter: blur(8px);
+}
+
+.rules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+.ruleItem {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+}
+
+.ruleItem svg {
+  font-size: var(--font-size-lg);
+}
+
+.secure {
+  color: var(--green);
+}
+
+.insecure {
+  color: var(--red);
+}
+
+.warn {
+  color: var(--orange);
+}

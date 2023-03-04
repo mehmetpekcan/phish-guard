@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "version": "0.0.1",
+  "name": "PhishGuard",
+  "description": "A Chrome extension to detect phishing websites",
+  "action": {
+    "default_popup": "src/extension/popup/index.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*", "<all_urls>"],
+      "js": ["src/extension/content/index.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/js/*.js", "assets/css/*.css"],
+      "matches": ["*://*/*"]
+    }
+  ]
+}
