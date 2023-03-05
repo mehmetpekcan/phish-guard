@@ -61,7 +61,7 @@ function PopupContainer({ status }) {
           {STATUS_DESCRIPTION[currentStatus]}
         </p>
       </div>
-      <ul className={styles.rules}>
+      {/* <ul className={styles.rules}>
         <li className={styles.ruleItem}>
           <StatusIcon />
           <span>URL Correctness</span>
@@ -78,7 +78,7 @@ function PopupContainer({ status }) {
           <StatusIcon />
           <span>Fraud Detection</span>
         </li>
-      </ul>
+      </ul> */}
     </div>
   );
 }

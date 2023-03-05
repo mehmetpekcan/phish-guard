@@ -3,7 +3,7 @@
   overflow-x: hidden;
   overflow-y: auto;
   min-width: 375px;
-  min-height: 600px;
+  min-height: 475px;
 
   display: flex;
   flex-direction: column;

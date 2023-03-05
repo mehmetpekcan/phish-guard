@@ -44,9 +44,12 @@ async function getDomainSimilarity(hostname) {
       },
     }
   );
-  const { status_code: statusCode } = await response.json();
+  const { status_code: statusCode, content } = await response.json();
 
-  return { status: DOMAIN_STATUS_CODES[statusCode] ?? STATUS.WARN };
+  return {
+    status: DOMAIN_STATUS_CODES[statusCode] ?? STATUS.WARN,
+    domain: content,
+  };
 }
 
 async function findLogoByScreenshot(base64image) {
@@ -66,29 +69,28 @@ async function findLogoByScreenshot(base64image) {
 
   return {
     status: LOGO_STATUS_CODES[statusCode] ?? FETCH_STATUS.FAILED,
-    content,
+    logo: content,
   };
 }
 
 async function handleTabUpdated(tabId, { status }, tab) {
-  console.log(tab);
-
   if (status === "complete" && tab.active && tab.url.startsWith("http")) {
-    const { favIconUrl, title, url } = tab;
+    const { url } = tab;
 
     const { hostname } = new URL(url);
     const verifiedSites = await chrome.storage.local.get();
 
     // Read from Cache
-    // if (verifiedSites[hostname]) {
-    //   changeExtensionIcon(tabId, verifiedSites[hostname]);
-    //   return;
-    // }
+    if (verifiedSites[hostname]) {
+      changeExtensionIcon(tabId, verifiedSites[hostname]);
+      return;
+    }
 
     let finalStatus;
 
-    // const { status: domainStatus } = await getDomainSimilarity(hostname);
-    const domainStatus = STATUS.INSECURE;
+    const { status: domainStatus, domain } = await getDomainSimilarity(
+      hostname
+    );
 
     if (domainStatus === STATUS.SECURE) {
       finalStatus = STATUS.SECURE;
@@ -97,11 +99,7 @@ async function handleTabUpdated(tabId, { status }, tab) {
     } else if (domainStatus === STATUS.INSECURE) {
       const image = await chrome.tabs.captureVisibleTab();
 
-      const { status: logoStatus, content: logo } = await findLogoByScreenshot(
-        image
-      );
-
-      console.log(logo);
+      const { status: logoStatus, logo } = await findLogoByScreenshot(image);
 
       if (logoStatus === FETCH_STATUS.SUCCESS) {
         finalStatus = STATUS.INSECURE;
