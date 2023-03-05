@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import clsx from "clsx";
 
 import styles from "./styles.module.css";
@@ -10,20 +10,54 @@ import {
   STATUS_DESCRIPTION,
 } from "./constants";
 
-function PopupContainer({ status = STATUS.WARN }) {
-  const StatusIcon = STATUS_ICONS[status];
+function PopupContainer({ status }) {
+  const [currentStatus, setCurrentStatus] = useState(status);
+
+  useEffect(() => {
+    function callback(tabs) {
+      var [{ active, status, url }] = tabs;
+
+      if (status === "complete" && active && url.startsWith("http")) {
+        const { hostname } = new URL(url);
+
+        chrome.storage.local.get().then((result) => {
+          setCurrentStatus(result[hostname] ?? STATUS.WARN);
+        });
+      }
+    }
+
+    chrome.tabs.query({ active: true, currentWindow: true }, callback);
+  }, []);
+
+  if (!currentStatus) {
+    return (
+      <div className={styles.popupContainer}>
+        <div className={styles.statusHeading}>
+          <h1 className={clsx(styles.title)}>
+            Loading phishing status powered by AI
+          </h1>
+        </div>
+      </div>
+    );
+  }
+
+  const StatusIcon = STATUS_ICONS[currentStatus];
 
   return (
     <div className={styles.popupContainer}>
       <div className={styles.statusIcon}>
-        <StatusIcon className={clsx(styles.statusIcon, styles[status])} />
-        <StatusIcon className={clsx(styles.ghost, styles[status])} />
+        <StatusIcon
+          className={clsx(styles.statusIcon, styles[currentStatus])}
+        />
+        <StatusIcon className={clsx(styles.ghost, styles[currentStatus])} />
       </div>
       <div className={styles.statusHeading}>
-        <h1 className={clsx(styles.title, styles[status])}>
-          {STATUS_TITLES[status]}
+        <h1 className={clsx(styles.title, styles[currentStatus])}>
+          {STATUS_TITLES[currentStatus]}
         </h1>
-        <p className={styles.description}>{STATUS_DESCRIPTION[status]}</p>
+        <p className={styles.description}>
+          {STATUS_DESCRIPTION[currentStatus]}
+        </p>
       </div>
       <ul className={styles.rules}>
         <li className={styles.ruleItem}>

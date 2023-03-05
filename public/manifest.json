@@ -14,7 +14,7 @@
     "default_popup": "src/extension/popup/index.html"
   },
   "host_permissions": ["http://*/*", "https://*/*", "<all_urls>"],
-  "permissions": ["tabs", "activeTab", "scripting"],
+  "permissions": ["tabs", "activeTab", "scripting", "background", "storage"],
   "content_scripts": [
     {
       "matches": ["http://*/*", "https://*/*", "<all_urls>"],

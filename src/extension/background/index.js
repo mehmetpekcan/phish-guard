@@ -1,30 +1,42 @@
-const ACTIVATED_TABS = new Set();
+const STATUS = {
+  SECURE: "secure",
+  INSECURE: "insecure",
+  WARN: "warn",
+};
 
-async function getTabId() {
-  const [tab] = await chrome.tabs.query({
-    active: true,
-    lastFocusedWindow: true,
-  });
-  return tab.id;
-}
+const ICON_PATHS = {
+  [STATUS.INSECURE]: "/icons/icon-insecure.png",
+  [STATUS.SECURE]: "/icons/icon-secure.png",
+  [STATUS.WARN]: "/icons/icon-warn.png",
+};
 
-async function takeScreenshot() {
-  return chrome.tabs.captureVisibleTab();
-}
-
-async function setExtensionIcon(tabId) {
-  chrome.action.setIcon({ path: "/icons/icon-secure.png", tabId });
+function changeExtensionIcon(tabId, status) {
+  chrome.action.setIcon({ path: ICON_PATHS[status], tabId });
 }
 
 async function handleTabUpdated(tabId, { status }, tab) {
   if (status === "complete" && tab.active && tab.url.startsWith("http")) {
-    console.log(tab);
+    const { favIconUrl, title, url } = tab;
+
+    const { hostname } = new URL(url);
+    const verifiedSites = await chrome.storage.local.get();
+
+    if (verifiedSites[hostname]) {
+      changeExtensionIcon(tabId, verifiedSites[hostname]);
+      return;
+    }
 
     setTimeout(async () => {
-      setExtensionIcon(tabId);
-      const image = await takeScreenshot();
-      console.log(image);
-    }, 200);
+      const image = await chrome.tabs.captureVisibleTab();
+
+      // TODO: Send image to server
+      const status =
+        typeof image === "string" && !!image ? "secure" : "insecure";
+
+      await chrome.storage.local.set({ [hostname]: status });
+
+      changeExtensionIcon(tabId, status);
+    }, 2000);
   }
 }
 
