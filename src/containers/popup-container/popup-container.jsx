@@ -26,6 +26,9 @@ function PopupContainer({ status }) {
     }
 
     chrome.tabs.query({ active: true, currentWindow: true }, callback);
+    chrome.tabs.onUpdated.addListener(() => {
+      chrome.tabs.query({ active: true, currentWindow: true }, callback);
+    });
   }, []);
 
   if (!currentStatus) {

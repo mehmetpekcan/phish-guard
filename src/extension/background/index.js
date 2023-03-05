@@ -1,3 +1,5 @@
+const BASE_URL = "https://api.phishguard.cc";
+
 const STATUS = {
   SECURE: "secure",
   INSECURE: "insecure",
@@ -10,63 +12,109 @@ const ICON_PATHS = {
   [STATUS.WARN]: "/icons/icon-warn.png",
 };
 
-const BASE_URL = "http://api.phishguard.cc";
+const DOMAIN_STATUS_CODES = {
+  100: STATUS.SECURE,
+  200: STATUS.INSECURE,
+  201: STATUS.INSECURE,
+};
 
-async function getDomainSimilarity(hostname) {
-  const STATUS_CODES = {
-    100: STATUS.SECURE,
-    200: STATUS.INSECURE,
-    201: STATUS.INSECURE,
-  };
+const FETCH_STATUS = {
+  SUCCESS: "success",
+  FAILED: "failed",
+};
 
-  const searchParams = new URLSearchParams({ current_domain: hostname });
-
-  const response = await fetch(
-    `${BASE_URL}/api/analyse/domain-similarity?${searchParams}`
-  );
-  const { status_code: statusCode } = await response.json();
-
-  return { status: STATUS_CODES[statusCode] ?? STATUS.WARN };
-}
+const LOGO_STATUS_CODES = {
+  100: FETCH_STATUS.SUCCESS,
+  200: FETCH_STATUS.FAILED,
+};
 
 function changeExtensionIcon(tabId, status) {
   chrome.action.setIcon({ path: ICON_PATHS[status], tabId });
 }
 
+async function getDomainSimilarity(hostname) {
+  const searchParams = new URLSearchParams({ current_domain: hostname });
+
+  const response = await fetch(
+    `${BASE_URL}/api/analyse/domain-similarity?${searchParams}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    }
+  );
+  const { status_code: statusCode } = await response.json();
+
+  return { status: DOMAIN_STATUS_CODES[statusCode] ?? STATUS.WARN };
+}
+
+async function findLogoByScreenshot(base64image) {
+  const options = {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      image: base64image.replace("data:image/jpeg;base64,", ""),
+    }),
+  };
+
+  const response = await fetch(
+    `${BASE_URL}/api/analyse/find-logo-by-screenshot`,
+    options
+  );
+  const { status_code: statusCode, content } = await response.json();
+
+  return {
+    status: LOGO_STATUS_CODES[statusCode] ?? FETCH_STATUS.FAILED,
+    content,
+  };
+}
+
 async function handleTabUpdated(tabId, { status }, tab) {
+  console.log(tab);
+
   if (status === "complete" && tab.active && tab.url.startsWith("http")) {
     const { favIconUrl, title, url } = tab;
 
     const { hostname } = new URL(url);
     const verifiedSites = await chrome.storage.local.get();
 
-    if (verifiedSites[hostname]) {
-      changeExtensionIcon(tabId, verifiedSites[hostname]);
-      return;
-    }
+    // Read from Cache
+    // if (verifiedSites[hostname]) {
+    //   changeExtensionIcon(tabId, verifiedSites[hostname]);
+    //   return;
+    // }
 
-    setTimeout(async () => {
-      // const { status: domainStatus } = await getDomainSimilarity(hostname);
-      // const domainStatus = STATUS.INSECURE
+    let finalStatus;
 
-      if (domainStatus === STATUS.SECURE) {
-        // TODO: dispatch success events
-      } else if (domainStatus === STATUS.WARN) {
-        // TODO:directly finish evertything end dispatch warn events
-      } else if (domainStatus === STATUS.INSECURE) {
-      }
+    // const { status: domainStatus } = await getDomainSimilarity(hostname);
+    const domainStatus = STATUS.INSECURE;
 
+    if (domainStatus === STATUS.SECURE) {
+      finalStatus = STATUS.SECURE;
+    } else if (domainStatus === STATUS.WARN) {
+      finalStatus = STATUS.WARN;
+    } else if (domainStatus === STATUS.INSECURE) {
       const image = await chrome.tabs.captureVisibleTab();
 
-      // TODO: Send image to server
-      const status =
-        typeof image === "string" && !!image ? "secure" : "insecure";
+      const { status: logoStatus, content: logo } = await findLogoByScreenshot(
+        image
+      );
 
-      await chrome.storage.local.set({ [hostname]: status });
+      console.log(logo);
 
-      changeExtensionIcon(tabId, status);
-    }, 2000);
+      if (logoStatus === FETCH_STATUS.SUCCESS) {
+        finalStatus = STATUS.INSECURE;
+      } else if (logoStatus === FETCH_STATUS.FAILED) {
+        finalStatus = STATUS.WARN;
+      }
+    }
+
+    await chrome.storage.local.set({ [hostname]: finalStatus });
+    changeExtensionIcon(tabId, finalStatus);
   }
 }
 
-chrome.tabs.onUpdated.addListener(handleTabUpdated);
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.tabs.onUpdated.addListener(handleTabUpdated);
+});
