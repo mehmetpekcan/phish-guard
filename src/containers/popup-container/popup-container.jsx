@@ -14,15 +14,14 @@ function PopupContainer({ status }) {
   const [currentStatus, setCurrentStatus] = useState(status);
 
   useEffect(() => {
-    function callback(tabs) {
+    async function callback(tabs) {
       var [{ active, status, url }] = tabs;
 
       if (status === "complete" && active && url.startsWith("http")) {
         const { hostname } = new URL(url);
 
-        chrome.storage.local.get().then((result) => {
-          setCurrentStatus(result[hostname] ?? STATUS.WARN);
-        });
+        const verifiedSites = await chrome.storage.local.get();
+        setCurrentStatus(verifiedSites[hostname] ?? STATUS.WARN);
       }
     }
 
