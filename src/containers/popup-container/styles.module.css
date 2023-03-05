@@ -12,8 +12,8 @@
   gap: var(--gap-xl);
   padding: var(--gap-xl);
   text-align: center;
-  color: var(--primary-white);
-  background-color: var(--black-900);
+  color: var(--white);
+  background-color: var(--black);
 }
 
 .statusHeading {

@@ -4,8 +4,17 @@
   "name": "PhishGuard",
   "description": "A Chrome extension to detect phishing websites",
   "action": {
+    "default_icon": {
+      "16": "icons/icon-warn.png",
+      "32": "icons/icon-warn.png",
+      "48": "icons/icon-warn.png",
+      "128": "icons/icon-warn.png"
+    },
+    "default_title": "PhishGuard",
     "default_popup": "src/extension/popup/index.html"
   },
+  "host_permissions": ["<all_urls>"],
+  "permissions": ["tabs", "activeTab", "scripting"],
   "content_scripts": [
     {
       "matches": ["http://*/*", "https://*/*", "<all_urls>"],
@@ -17,5 +26,14 @@
       "resources": ["assets/js/*.js", "assets/css/*.css"],
       "matches": ["*://*/*"]
     }
-  ]
+  ],
+  "background": {
+    "service_worker": "src/extension/background/index.js"
+  },
+  "icons": {
+    "16": "icons/icon-warn.png",
+    "32": "icons/icon-warn.png",
+    "48": "icons/icon-warn.png",
+    "128": "icons/icon-warn.png"
+  }
 }

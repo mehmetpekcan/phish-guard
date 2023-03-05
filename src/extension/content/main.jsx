@@ -1,19 +1,16 @@
-import html2canvas from "html2canvas";
+export const TAKE_SCREENSHOT_ACTION = {
+  type: "TAKE_SCREENSHOT",
+};
 
-console.log("Remote content from extension");
+const receiveMessageResponse = (response) => {
+  const image = document.createElement("img");
+  image.src = response;
 
-setTimeout(() => {
-  const html = document.querySelector("html");
+  const newWindow = window.open("");
+  newWindow.document.write(image.outerHTML);
+};
 
-  console.log(window.location);
-
-  html2canvas(html).then(function (canvas) {
-    const dataURL = canvas.toDataURL("image/png");
-
-    const image = document.createElement("img");
-    image.src = dataURL;
-
-    const newWindow = window.open("");
-    newWindow.document.write(image.outerHTML);
-  });
-}, 1500);
+// We are not able to use `chrome.tabs` in content scripts
+// thats why we are sending message to background script
+// to take the screenshot
+chrome.runtime.sendMessage(TAKE_SCREENSHOT_ACTION, receiveMessageResponse);

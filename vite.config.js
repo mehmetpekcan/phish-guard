@@ -19,6 +19,7 @@ export default defineConfig({
       input: {
         popup: resolve(extensionDir, "popup", "index.html"),
         content: resolve(extensionDir, "content", "index.js"),
+        background: resolve(extensionDir, "background", "index.js"),
       },
       output: {
         entryFileNames: "src/extension/[name]/index.js",
