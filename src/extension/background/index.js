@@ -1,5 +1,3 @@
-console.log("BG?");
-
 const ACTIVATED_TABS = new Set();
 
 async function getTabId() {
@@ -10,31 +8,24 @@ async function getTabId() {
   return tab.id;
 }
 
-async function setExtensionIcon() {
-  const tabId = await getTabId();
-  const activatedBefore = ACTIVATED_TABS.has(tabId);
-
-  if (activatedBefore) {
-    return;
-  }
-
-  chrome.action.setIcon({ path: "/icons/icon-secure.png", tabId });
-  ACTIVATED_TABS.add(tabId);
+async function takeScreenshot() {
+  return chrome.tabs.captureVisibleTab();
 }
 
-chrome.tabs.onActivated.addListener(setExtensionIcon);
+async function setExtensionIcon(tabId) {
+  chrome.action.setIcon({ path: "/icons/icon-secure.png", tabId });
+}
 
-const onMessage = (request, sender, sendResponse) => {
-  // TODO: Fix import problem then import action type
-  if (request.type === "TAKE_SCREENSHOT") {
-    setTimeout(() => {
-      chrome.tabs.captureVisibleTab(null, {}, function (dataUrl) {
-        sendResponse(dataUrl);
-      });
-    }, 1000);
+async function handleTabUpdated(tabId, { status }, tab) {
+  if (status === "complete" && tab.active && tab.url.startsWith("http")) {
+    console.log(tab);
 
-    return true;
+    setTimeout(async () => {
+      setExtensionIcon(tabId);
+      const image = await takeScreenshot();
+      console.log(image);
+    }, 200);
   }
-};
+}
 
-chrome.runtime.onMessage.addListener(onMessage);
+chrome.tabs.onUpdated.addListener(handleTabUpdated);

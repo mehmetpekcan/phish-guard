@@ -13,7 +13,7 @@
     "default_title": "PhishGuard",
     "default_popup": "src/extension/popup/index.html"
   },
-  "host_permissions": ["<all_urls>"],
+  "host_permissions": ["http://*/*", "https://*/*", "<all_urls>"],
   "permissions": ["tabs", "activeTab", "scripting"],
   "content_scripts": [
     {
